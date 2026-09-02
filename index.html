@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronLink — Executive Engineering Dashboard (Sprint 2)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#F0FDF4',
+                            500: '#10B981',
+                            600: '#059669',
+                        },
+                        cyber: {
+                            blue: '#0284C7',
+                            cyan: '#06B6D4',
+                            indigo: '#6366F1',
+                            purple: '#8B5CF6',
+                            rose: '#F43F5E',
+                            amber: '#F59E0B',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 15px rgba(6, 182, 212, 0.2)' },
+                            '100%': { boxShadow: '0 0 30px rgba(6, 182, 212, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #080B11;
+            color: #E2E8F0;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0F19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card-hover:hover {
+            transform: translateY(-2px);
+            border-color: rgba(6, 182, 212, 0.4);
+            box-shadow: 0 12px 30px -10px rgba(6, 182, 212, 0.15);
+        }
+        
+        .gradient-border-cyan {
+            border-image: linear-gradient(to right, #06b6d4, #3b82f6) 1;
+        }
+        
+        .tab-btn.active {
+            background: rgba(6, 182, 212, 0.15);
+            color: #38BDF8;
+            border-color: rgba(6, 182, 212, 0.4);
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .glass-card {
+                background: white !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                color: black !important;
+            }
+            .text-white, .text-slate-200, .text-slate-300 {
+                color: #0f172a !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-[#080B11] text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-300">
+
+    <!-- Ambient Background Lighting -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]"></div>
+        <div class="absolute top-1/3 -right-40 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px]"></div>
+        <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-indigo-600/10 rounded-full blur-[128px]"></div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-[#080B11]/90 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+                
+                <!-- Logo & Title -->
+                <div class="flex items-center gap-3.5">
+                    <div class="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/25 ring-1 ring-white/20">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-extrabold text-white tracking-tight flex items-center gap-1.5">
+                                IronLink <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">v2.0</span>
+                            </h1>
+                            <span class="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                SPRINT 2 — 100% CERRADO
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Cuadro de Mando Integral • InnovaSoft • Universidad Gerardo Barrios</p>
+                    </div>
+                </div>
+
+                <!-- Team Members Animated Slider Widget -->
+                <div class="flex items-center gap-3">
+                    <div id="teamSliderContainer" class="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-cyan-500/40 rounded-xl px-3.5 py-1.5 transition-all shadow-inner flex items-center gap-3 min-w-[280px] sm:min-w-[340px] max-w-[380px] group">
+                        
+                        <!-- Dynamic Avatar Badge -->
+                        <div id="sliderAvatar" class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 ring-1 ring-white/10 shadow transition-all duration-500">
+                            LV
+                        </div>
+
+                        <!-- Member Info with Slide Transition -->
+                        <div class="flex-1 overflow-hidden">
+                            <div id="sliderTextWrapper" class="transition-all duration-500 transform translate-y-0 opacity-100">
+                                <div class="flex items-center justify-between gap-1">
+                                    <h4 id="sliderName" class="text-xs font-extrabold text-white truncate tracking-tight">Ludwin Saúl Vásquez Romero</h4>
+                                    <span id="sliderBadge" class="text-[9px] font-mono text-cyan-400 font-bold px-1.5 py-0.2 rounded bg-cyan-500/10 border border-cyan-500/20 shrink-0">1/7</span>
+                                </div>
+                                <p id="sliderRole" class="text-[10px] text-cyan-300 font-medium truncate">Scrum Master / Architecture Lead</p>
+                            </div>
+                        </div>
+
+                        <!-- Mini Navigation Controls -->
+                        <div class="flex items-center gap-0.5 shrink-0 opacity-40 group-hover:opacity-100 transition">
+                            <button onclick="prevMember()" class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition" title="Anterior">
+                                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="nextMember()" class="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition" title="Siguiente">
+                                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Mini Progress Line -->
+                        <div class="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-800">
+                            <div id="sliderProgressBar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-[3500ms] ease-linear w-0"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="flex items-center gap-1 overflow-x-auto py-2 border-t border-slate-800/60 no-print text-xs">
+                <button onclick="switchTab('tab-overview')" id="btn-tab-overview" class="tab-btn active px-3.5 py-2 rounded-lg font-semibold text-slate-300 hover:text-white border border-transparent transition flex items-center gap-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Visión General & KPIs</span>
+                </button>
+                <button onclick="switchTab('tab-kanban')" id="btn-tab-kanban" class="tab-btn px-3.5 py-2 rounded-lg font-semibold text-slate-300 hover:text-white border border-transparent transition flex items-center gap-2">
+                    <i data-lucide="git-pull-request" class="w-4 h-4"></i>
+                    <span>Flujo Kanban & Lead/Cycle</span>
+                </button>
+                <button onclick="switchTab('tab-qa')" id="btn-tab-qa" class="tab-btn px-3.5 py-2 rounded-lg font-semibold text-slate-300 hover:text-white border border-transparent transition flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Calidad & QA (23 TCs)</span>
+                </button>
+                <button onclick="switchTab('tab-bugs')" id="btn-tab-bugs" class="tab-btn px-3.5 py-2 rounded-lg font-semibold text-slate-300 hover:text-white border border-transparent transition flex items-center gap-2">
+                    <i data-lucide="bug" class="w-4 h-4"></i>
+                    <span>Defectos & Bugs (5/5)</span>
+                </button>
+                <button onclick="switchTab('tab-tech')" id="btn-tab-tech" class="tab-btn px-3.5 py-2 rounded-lg font-semibold text-slate-300 hover:text-white border border-transparent transition flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                    <span>Rendimiento & Rust/Axum</span>
+                </button>
+                <button onclick="switchTab('tab-dod')" id="btn-tab-dod" class="tab-btn px-3.5 py-2 rounded-lg font-semibold text-slate-300 hover:text-white border border-transparent transition flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    <span>Definition of Done</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- ================================================================= -->
+        <!-- TAB 1: VISIÓN GENERAL & KPIS EJECUTIVOS                           -->
+        <!-- ================================================================= -->
+        <div id="tab-overview" class="tab-content space-y-6">
+            
+            <!-- Sprint Goal Hero Banner -->
+            <div class="relative overflow-hidden rounded-2xl glass-card p-6 border border-cyan-500/30 bg-gradient-to-r from-blue-950/40 via-slate-900/80 to-cyan-950/40 shadow-xl">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                    <div class="space-y-2 max-w-3xl">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                                <i data-lucide="target" class="w-3.5 h-3.5"></i>
+                                Sprint Goal #2
+                            </span>
+                            <span class="text-xs text-slate-400 font-mono">2026-IRL-G05 • 4 Semanas de Desarrollo</span>
+                        </div>
+                        <p class="text-slate-100 text-sm md:text-base font-semibold leading-relaxed italic">
+                            "Habilitar una experiencia integral de colaboración dentro de los nodos de IronLink, permitiendo que los miembros se identifiquen mediante su perfil, se comuniquen a través de un chat persistente y organicen su trabajo mediante subgrupos y reuniones programadas."
+                        </p>
+                        <div class="flex flex-wrap items-center gap-3 pt-1 text-xs text-slate-400">
+                            <span class="flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5 text-cyan-400"></i> InnovaSoft (7 Integrantes)</span>
+                            <span>•</span>
+                            <span class="flex items-center gap-1"><i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-400"></i> Cero Bloqueantes</span>
+                            <span>•</span>
+                            <span class="flex items-center gap-1"><i data-lucide="activity" class="w-3.5 h-3.5 text-purple-400"></i> Velocidad: 64h / 64h (100%)</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Gauge Block -->
+                    <div class="flex items-center gap-4 bg-slate-900/90 p-4 rounded-xl border border-slate-800 shrink-0">
+                        <div class="relative w-16 h-16 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path class="text-cyan-400" stroke-dasharray="100, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            </svg>
+                            <span class="absolute text-sm font-black text-white font-mono">100%</span>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Capacidad Total</div>
+                            <div class="text-xl font-black text-white font-mono">64.0 <span class="text-xs font-normal text-slate-400">/ 64h</span></div>
+                            <div class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> 4 HUs en [DONE]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8 Master KPI Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- KPI 1: Horas -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Horas Quemadas</span>
+                        <div class="p-1.5 rounded-lg bg-orange-500/10 text-orange-400">
+                            <i data-lucide="flame" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-white font-mono">64.0 <span class="text-xs font-normal text-slate-400">h</span></div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> 100% objetivo
+                        </span>
+                        <span class="text-slate-500 font-mono">0h restantes</span>
+                    </div>
+                </div>
+
+                <!-- KPI 2: Historias de Usuario -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Historias (DoD)</span>
+                        <div class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                            <i data-lucide="check-square" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-white font-mono">4 <span class="text-xs font-normal text-slate-400">/ 4 HUs</span></div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-cyan-400 font-semibold">23 Tareas Técnicas</span>
+                        <span class="text-emerald-400 font-bold">100% Aprobado</span>
+                    </div>
+                </div>
+
+                <!-- KPI 3: Lead Time -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Lead Time Medio</span>
+                        <div class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+                            <i data-lucide="timer" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-cyan-400 font-mono">5.2 <span class="text-xs font-normal text-slate-400">días</span></div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">Benchmark: &lt; 7.0d</span>
+                        <span class="text-emerald-400 font-semibold font-mono">-25.7% vs Max</span>
+                    </div>
+                </div>
+
+                <!-- KPI 4: Cycle Time -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Cycle Time Medio</span>
+                        <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-amber-400 font-mono">2.8 <span class="text-xs font-normal text-slate-400">días</span></div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">Benchmark: &lt; 4.0d</span>
+                        <span class="text-emerald-400 font-semibold">Desarrollo Activo</span>
+                    </div>
+                </div>
+
+                <!-- KPI 5: Eficiencia de Flujo -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Eficiencia de Flujo</span>
+                        <div class="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
+                            <i data-lucide="trending-up" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-purple-400 font-mono">71.4%</div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">Touch: 16.0h / HU</span>
+                        <span class="text-emerald-400 font-semibold">&gt; 60% (Alta Fluidez)</span>
+                    </div>
+                </div>
+
+                <!-- KPI 6: QA Pass Rate -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">QA Pass Rate</span>
+                        <div class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">100%</div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-300 font-mono">23 / 23 Casos PASA</span>
+                        <span class="text-emerald-400 font-bold">0 Bloqueantes</span>
+                    </div>
+                </div>
+
+                <!-- KPI 7: Bugs Resueltos -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Defectos Cerrados</span>
+                        <div class="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+                            <i data-lucide="bug" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-white font-mono">5 <span class="text-xs font-normal text-slate-400">/ 5</span></div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400 font-mono">BUG-S2-001..005</span>
+                        <span class="text-emerald-400 font-semibold">100% Resueltos</span>
+                    </div>
+                </div>
+
+                <!-- KPI 8: Latencia API Rust -->
+                <div class="glass-card glass-card-hover p-4 rounded-2xl">
+                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider">Latencia Media API</span>
+                        <div class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400">
+                            <i data-lucide="server" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-black text-cyan-400 font-mono">8.2 <span class="text-xs font-normal text-slate-400">ms</span></div>
+                    <div class="mt-2 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-400">Axum / Tokio / SQLx</span>
+                        <span class="text-emerald-400 font-semibold font-mono">0 Errores HTTP</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Charts Row 1: Burndown & Effort -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Burndown Chart (2 Cols) -->
+                <div class="lg:col-span-2 glass-card p-5 rounded-2xl space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i data-lucide="line-chart" class="w-4 h-4 text-cyan-400"></i>
+                                Curva de Quemado de Horas (Burndown Chart)
+                            </h3>
+                            <p class="text-xs text-slate-400">Evolución real del esfuerzo (64h) vs. Descenso ideal planeado</p>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs font-mono">
+                            <span class="flex items-center gap-1.5 text-slate-400">
+                                <span class="w-3 h-0.5 bg-slate-400 inline-block"></span> Línea Ideal
+                            </span>
+                            <span class="flex items-center gap-1.5 text-cyan-400 font-bold">
+                                <span class="w-3 h-1 bg-cyan-400 rounded inline-block"></span> Real Restante
+                            </span>
+                        </div>
+                    </div>
+                    <div class="h-64 sm:h-72">
+                        <canvas id="mainBurndownChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Effort Distribution (1 Col) -->
+                <div class="glass-card p-5 rounded-2xl space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-400"></i>
+                            Distribución de Esfuerzo (64h)
+                        </h3>
+                        <p class="text-xs text-slate-400">Proporción por Historia de Usuario</p>
+                    </div>
+                    <div class="h-56 relative flex items-center justify-center">
+                        <canvas id="mainEffortChart"></canvas>
+                        <div class="absolute text-center pointer-events-none">
+                            <div class="text-2xl font-black text-white font-mono">64h</div>
+                            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Sprint</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-slate-800">
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#0284C7]"></span> Chat (20h)</div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#06B6D4]"></span> Subgrupos (16h)</div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#6366F1]"></span> Reuniones (16h)</div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span> Perfil (12h)</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Quick Table: 4 User Stories Summary -->
+            <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+                <div class="px-6 py-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
+                            Historias de Usuario Comprometidas en Sprint 2
+                        </h3>
+                        <p class="text-xs text-slate-400">Haz clic en cualquier historia para ver su ficha técnica</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-mono">
+                        4 de 4 Historias (100% Completadas)
+                    </span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-mono">
+                            <tr>
+                                <th class="px-6 py-3">ID Historia</th>
+                                <th class="px-6 py-3">Épica</th>
+                                <th class="px-6 py-3">Declaración de Valor</th>
+                                <th class="px-6 py-3 text-center">Esfuerzo</th>
+                                <th class="px-6 py-3 text-center">MoSCoW</th>
+                                <th class="px-6 py-3">Responsables</th>
+                                <th class="px-6 py-3 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60">
+                            <!-- HU 1 -->
+                            <tr onclick="openStoryModal('IRL-WKS-US-03')" class="hover:bg-slate-800/40 cursor-pointer transition">
+                                <td class="px-6 py-3.5 font-bold font-mono text-cyan-400 flex items-center gap-1.5">
+                                    <i data-lucide="message-square" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    IRL-WKS-US-03
+                                </td>
+                                <td class="px-6 py-3.5 font-medium text-slate-300">Nodos y Colaboración</td>
+                                <td class="px-6 py-3.5 text-slate-200">Chat persistente en canales con roles [ADMIN/MEMBER], avatares y auto-scroll.</td>
+                                <td class="px-6 py-3.5 text-center font-bold text-white font-mono">20 h</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/20 font-semibold text-[10px]">MUST (1)</span></td>
+                                <td class="px-6 py-3.5 text-slate-300">Ricardo Mendiola / Alberto Velázquez</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">DONE</span></td>
+                            </tr>
+                            <!-- HU 2 -->
+                            <tr onclick="openStoryModal('IRL-WKS-US-02')" class="hover:bg-slate-800/40 cursor-pointer transition">
+                                <td class="px-6 py-3.5 font-bold font-mono text-cyan-400 flex items-center gap-1.5">
+                                    <i data-lucide="network" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    IRL-WKS-US-02
+                                </td>
+                                <td class="px-6 py-3.5 font-medium text-slate-300">Nodos y Colaboración</td>
+                                <td class="px-6 py-3.5 text-slate-200">Subgrupos públicos y privados con control de visibilidad y membresías dinámicas.</td>
+                                <td class="px-6 py-3.5 text-center font-bold text-white font-mono">16 h</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/20 font-semibold text-[10px]">MUST (3)</span></td>
+                                <td class="px-6 py-3.5 text-slate-300">José Fuentes / Alberto Velázquez</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">DONE</span></td>
+                            </tr>
+                            <!-- HU 3 -->
+                            <tr onclick="openStoryModal('IRL-WKS-US-04')" class="hover:bg-slate-800/40 cursor-pointer transition">
+                                <td class="px-6 py-3.5 font-bold font-mono text-cyan-400 flex items-center gap-1.5">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    IRL-WKS-US-04
+                                </td>
+                                <td class="px-6 py-3.5 font-medium text-slate-300">Calendario y Reuniones</td>
+                                <td class="px-6 py-3.5 text-slate-200">Agendamiento síncrono en UTC ISO 8601 y apertura de Google Meet vía url_launcher.</td>
+                                <td class="px-6 py-3.5 text-center font-bold text-white font-mono">16 h</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20 font-semibold text-[10px]">SHOULD (3)</span></td>
+                                <td class="px-6 py-3.5 text-slate-300">Víctor Iglesias / Luis Rivera</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">DONE</span></td>
+                            </tr>
+                            <!-- HU 4 -->
+                            <tr onclick="openStoryModal('IRL-IAM-US-05')" class="hover:bg-slate-800/40 cursor-pointer transition">
+                                <td class="px-6 py-3.5 font-bold font-mono text-cyan-400 flex items-center gap-1.5">
+                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    IRL-IAM-US-05
+                                </td>
+                                <td class="px-6 py-3.5 font-medium text-slate-300">Identidad y Perfil</td>
+                                <td class="px-6 py-3.5 text-slate-200">Personalización de avatar, estado de presencia y cambio seguro de clave Argon2id.</td>
+                                <td class="px-6 py-3.5 text-center font-bold text-white font-mono">12 h</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/20 font-semibold text-[10px]">SHOULD (5)</span></td>
+                                <td class="px-6 py-3.5 text-slate-300">Ricardo Mendiola / Ludwin Vásquez</td>
+                                <td class="px-6 py-3.5 text-center"><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">DONE</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 2: MÉTRICAS DE FLUJO KANBAN & LEAD/CYCLE TIME                 -->
+        <!-- ================================================================= -->
+        <div id="tab-kanban" class="tab-content hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart: Lead Time vs Cycle Time -->
+                <div class="glass-card p-5 rounded-2xl space-y-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i data-lucide="clock" class="w-4 h-4 text-cyan-400"></i>
+                            Lead Time vs. Cycle Time por Historia
+                        </h3>
+                        <p class="text-xs text-slate-400">Comparativa entre tiempo total de ciclo de vida y tiempo activo de codificación</p>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="tabKanbanChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Flow Efficiency Breakdown -->
+                <div class="glass-card p-5 rounded-2xl space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i data-lucide="gauge" class="w-4 h-4 text-purple-400"></i>
+                            Diagnóstico de Eficiencia de Flujo (Flow Efficiency)
+                        </h3>
+                        <p class="text-xs text-slate-400">Proporción de tiempo activo (Touch Time) frente a tiempos de espera (Queue)</p>
+                    </div>
+
+                    <div class="space-y-3 bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-400">Eficiencia Calculada:</span>
+                            <span class="text-purple-400 font-bold font-mono text-base">71.4%</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden flex">
+                            <div class="bg-purple-500 h-full" style="width: 71.4%"></div>
+                            <div class="bg-slate-700 h-full" style="width: 28.6%"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span> Touch Time (16.0h netas)</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-700"></span> Queue Time (2.4 días)</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300">
+                        <span class="font-bold">💡 Conclusión Técnica:</span> La eficiencia del 71.4% supera holgadamente el umbral de referencia de la industria (&gt;60%), reflejando una ausencia casi total de cuellos de botella en la fase de revisión de código y testing QA.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanban Performance Metrics Table -->
+            <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+                <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-white">Tabla Consolidada de Métricas de Flujo</h3>
+                    <span class="text-xs text-slate-400 font-mono">Límite WIP: Máx 2 tareas/dev</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-mono">
+                            <tr>
+                                <th class="px-6 py-3">Métrica de Flujo</th>
+                                <th class="px-6 py-3 text-center">Valor Promedio</th>
+                                <th class="px-6 py-3 text-center">Valor Mínimo</th>
+                                <th class="px-6 py-3 text-center">Valor Máximo</th>
+                                <th class="px-6 py-3 text-center">Objetivo / Benchmark</th>
+                                <th class="px-6 py-3">Interpretación y Diagnóstico</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 font-mono">
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-6 py-3.5 font-bold text-white font-sans">Lead Time (Entrega)</td>
+                                <td class="px-6 py-3.5 text-center text-cyan-400 font-bold">5.2 días</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">4.0 d</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">6.5 d</td>
+                                <td class="px-6 py-3.5 text-center text-emerald-400">&lt; 7.0 días</td>
+                                <td class="px-6 py-3.5 text-slate-300 font-sans">Tránsito ágil desde la asignación hasta el cierre verificado en DoD.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-6 py-3.5 font-bold text-white font-sans">Cycle Time (Desarrollo)</td>
+                                <td class="px-6 py-3.5 text-center text-amber-400 font-bold">2.8 días</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">2.0 d</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">3.5 d</td>
+                                <td class="px-6 py-3.5 text-center text-emerald-400">&lt; 4.0 días</td>
+                                <td class="px-6 py-3.5 text-slate-300 font-sans">Velocidad óptima en estado In Progress con integración continua.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-6 py-3.5 font-bold text-white font-sans">Touch Time (Tiempo Activo)</td>
+                                <td class="px-6 py-3.5 text-center text-purple-400 font-bold">16.0 horas</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">12.0 h</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">20.0 h</td>
+                                <td class="px-6 py-3.5 text-center text-emerald-400">Exacto</td>
+                                <td class="px-6 py-3.5 text-slate-300 font-sans">Alineación perfecta entre el esfuerzo estimado y la programación real.</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-6 py-3.5 font-bold text-white font-sans">Queue Time (Espera)</td>
+                                <td class="px-6 py-3.5 text-center text-slate-300 font-bold">2.4 días</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">1.5 d</td>
+                                <td class="px-6 py-3.5 text-center text-slate-400">3.0 d</td>
+                                <td class="px-6 py-3.5 text-center text-emerald-400">&lt; 3.0 días</td>
+                                <td class="px-6 py-3.5 text-slate-300 font-sans">Tiempos mínimos de permanencia en validación QA previa al merge.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 3: CALIDAD & QA TESTING (23 CASOS DE PRUEBA)                  -->
+        <!-- ================================================================= -->
+        <div id="tab-qa" class="tab-content hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- QA Pass Rate Summary Card -->
+                <div class="glass-card p-5 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                            QA Pass Rate: 100%
+                        </span>
+                        <h3 class="text-xl font-extrabold text-white mt-2">23 de 23 Casos Aprobados</h3>
+                        <p class="text-xs text-slate-400 mt-1">Suite de pruebas de integración, lógica relacional, widgets Flutter y seguridad IAM.</p>
+                    </div>
+
+                    <div class="space-y-2 py-4">
+                        <div class="flex justify-between text-xs text-slate-300">
+                            <span>Pruebas Superadas</span>
+                            <span class="font-bold text-emerald-400 font-mono">23 / 23</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-emerald-500 h-full rounded-full" style="width: 100%"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-slate-200">Plataformas de Prueba:</span> macOS darwin-arm64, Windows 11 x64, API Engine Rust Axum y base de datos PostgreSQL 15.
+                    </div>
+                </div>
+
+                <!-- QA Distribution Chart (2 Cols) -->
+                <div class="lg:col-span-2 glass-card p-5 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i data-lucide="bar-chart" class="w-4 h-4 text-emerald-400"></i>
+                            Cobertura de Pruebas QA por Módulo del Sistema
+                        </h3>
+                        <span class="text-xs text-slate-400 font-mono">Total: 23 TCs</span>
+                    </div>
+                    <div class="h-60">
+                        <canvas id="tabQAChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Filterable 23 Test Cases Table -->
+            <div class="glass-card rounded-2xl overflow-hidden border border-slate-800 space-y-3 p-5">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i data-lucide="list-checks" class="w-4 h-4 text-cyan-400"></i>
+                            Matriz de Trazabilidad y Casos de Prueba Ejecutados (23 TCs)
+                        </h3>
+                        <p class="text-xs text-slate-400">Filtra por módulo o busca cualquier escenario</p>
+                    </div>
+                    
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-64">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+                        <input type="text" id="qaSearchInput" onkeyup="filterQATable()" placeholder="Buscar caso o funcionalidad..." class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table id="qaTable" class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800 font-mono">
+                            <tr>
+                                <th class="px-4 py-3">ID Caso</th>
+                                <th class="px-4 py-3">HU Asociada</th>
+                                <th class="px-4 py-3">Módulo</th>
+                                <th class="px-4 py-3">Escenario de Prueba Validado</th>
+                                <th class="px-4 py-3 text-center">Tipo</th>
+                                <th class="px-4 py-3 text-center">Prioridad</th>
+                                <th class="px-4 py-3 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60">
+                            <!-- Chat TCs -->
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-CHT-001</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-03</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Chat Persistente</td>
+                                <td class="px-4 py-3 text-slate-200">Envío y persistencia de mensaje en canal con usuario activo.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Integración</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Alta</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-CHT-002</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-03</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Chat Persistente</td>
+                                <td class="px-4 py-3 text-slate-200">Carga histórica cronológica UTC y auto-scroll inteligente hacia el último mensaje.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">UI / State</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-CHT-003</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-03</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Chat Persistente</td>
+                                <td class="px-4 py-3 text-slate-200">Identificación visual del autor (Avatar, Nombre y Rol [ADMIN/MEMBER]) en burbujas.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">UI Flutter</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-CHT-004</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-03</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Chat Persistente</td>
+                                <td class="px-4 py-3 text-slate-200">Validación y bloqueo de mensajes vacíos o con espacios en blanco (400 Bad Request).</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">API Valid</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-CHT-005</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-03</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Chat Persistente</td>
+                                <td class="px-4 py-3 text-slate-200">Bloqueo estricto de acceso al chat para usuarios no miembros (403 Forbidden).</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Seguridad</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Crítica</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+
+                            <!-- Subgroups TCs -->
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-SUB-001</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-02</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Subgrupos</td>
+                                <td class="px-4 py-3 text-slate-200">Creación exitosa de subgrupo público y asignación automática del creador como admin.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Integración</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Alta</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-SUB-002</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-02</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Subgrupos</td>
+                                <td class="px-4 py-3 text-slate-200">Aislamiento y ocultamiento de subgrupos privados ante usuarios no autorizados.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Seguridad</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Crítica</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-SUB-003</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-02</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Subgrupos</td>
+                                <td class="px-4 py-3 text-slate-200">Validación de longitud mínima de nombre (mínimo 3 caracteres, BUG-S2-005).</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Form Valid</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-SUB-004</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-02</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Subgrupos</td>
+                                <td class="px-4 py-3 text-slate-200">Membresías dinámicas: unión y salida controlada de subgrupos.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">State / DB</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+
+                            <!-- Meetings TCs -->
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-REU-001</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-04</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Reuniones</td>
+                                <td class="px-4 py-3 text-slate-200">Registro de reunión con fecha y hora normalizada en UTC (ISO 8601).</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Integración</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Alta</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-REU-002</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-04</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Reuniones</td>
+                                <td class="px-4 py-3 text-slate-200">Validación de formato de enlace Google Meet (https://meet.google.com/xxx-xxxx-xxx).</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Regex Valid</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-REU-003</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-04</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Reuniones</td>
+                                <td class="px-4 py-3 text-slate-200">Lanzamiento directo de Google Meet en navegador nativo mediante url_launcher.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Desktop OS</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-REU-004</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-04</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Reuniones</td>
+                                <td class="px-4 py-3 text-slate-200">Cálculo y renderizado dinámico de la duración de la reunión en minutos.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">UI Flutter</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-REU-005</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-WKS-US-04</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Reuniones</td>
+                                <td class="px-4 py-3 text-slate-200">Cancelación y eliminación de sesión agendada con permisos de moderador.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Funcional</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+
+                            <!-- Profile TCs -->
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-PRF-001</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-IAM-US-05</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Perfil & IAM</td>
+                                <td class="px-4 py-3 text-slate-200">Personalización de color de avatar entre 8 opciones corporativas reactivas.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Riverpod</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-PRF-002</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-IAM-US-05</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Perfil & IAM</td>
+                                <td class="px-4 py-3 text-slate-200">Actualización de biografía y chip de presencia dinámica (Online/Busy/Away).</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">UI / API</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-PRF-003</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-IAM-US-05</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Perfil & IAM</td>
+                                <td class="px-4 py-3 text-slate-200">Cambio criptográfico de contraseña con re-hashing mediante Argon2id.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Criptografía</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Crítica</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-PRF-004</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">IRL-IAM-US-05</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Perfil & IAM</td>
+                                <td class="px-4 py-3 text-slate-200">Rechazo de cambio de contraseña cuando la clave actual no coincide.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Seguridad</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Alta</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+
+                            <!-- UX & Architecture TCs -->
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-UX-001</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">General</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Workspace UX</td>
+                                <td class="px-4 py-3 text-slate-200">Consistencia en paleta oscura y legibilidad tipográfica en Flutter Desktop.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">UI / Visual</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px]">Media</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-UX-002</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">General</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Workspace UX</td>
+                                <td class="px-4 py-3 text-slate-200">Navegación reactiva fluida por pestañas [Chat | Subgrupos | Reuniones] sin parpadeos.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Riverpod UX</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Alta</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-MAC-001</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">Arquitectura</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Flutter Runner</td>
+                                <td class="px-4 py-3 text-slate-200">Ejecución nativa de pruebas de widgets en macOS (darwin-arm64) en 2.3s.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Widget Tests</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Alta</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="px-4 py-3 font-mono font-bold text-cyan-400">TC-API-001</td>
+                                <td class="px-4 py-3 font-mono text-slate-400">Arquitectura</td>
+                                <td class="px-4 py-3 text-slate-300 font-medium">Backend Rust</td>
+                                <td class="px-4 py-3 text-slate-200">Suite de integración fullstack y endpoints REST en Rust Axum con latencia &lt; 10ms.</td>
+                                <td class="px-4 py-3 text-center font-mono text-slate-400">Integration</td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px]">Crítica</span></td>
+                                <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">PASA</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 4: DEFECTOS & BUGS SOLUCIONADOS (5/5)                         -->
+        <!-- ================================================================= -->
+        <div id="tab-bugs" class="tab-content hidden space-y-6">
+            
+            <div class="glass-card p-6 rounded-2xl space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 uppercase">
+                            Tasa de Resolución: 100%
+                        </span>
+                        <h3 class="text-lg font-bold text-white mt-1">Bitácora de Defectos Detectados y Solventados (Sprint 2)</h3>
+                        <p class="text-xs text-slate-400">Todos los bugs fueron identificados en la fase de testing QA y cerrados antes del Sprint Review.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-bold font-mono border border-emerald-500/30 flex items-center gap-1.5">
+                            <i data-lucide="check-check" class="w-4 h-4"></i> 5 Cerrados / 0 Abiertos
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Bug Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                    
+                    <!-- BUG 1 -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-rose-400 text-xs">BUG-S2-001</span>
+                            <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-semibold">Media</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-white">Desfase de Zona Horaria en Calendario</h4>
+                        <p class="text-[11px] text-slate-400">Las reuniones creadas en clientes mostraban horas desplazadas al visualizarlas.</p>
+                        <div class="text-[11px] pt-2 border-t border-slate-800/80 text-emerald-300">
+                            <span class="font-bold text-slate-200">Solución:</span> Persistencia estricta en <code class="text-cyan-300 font-mono">TIMESTAMPTZ UTC</code> y parsing ISO 8601 en Flutter.
+                        </div>
+                    </div>
+
+                    <!-- BUG 2 -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-rose-400 text-xs">BUG-S2-002</span>
+                            <span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 text-[10px] font-semibold">Alta</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-white">Creador no auto-asignado como Moderador</h4>
+                        <p class="text-[11px] text-slate-400">Al crear un subgrupo, el usuario creador no figuraba en la tabla de miembros con rol admin.</p>
+                        <div class="text-[11px] pt-2 border-t border-slate-800/80 text-emerald-300">
+                            <span class="font-bold text-slate-200">Solución:</span> Transacción atómica en PostgreSQL (<code class="text-cyan-300 font-mono">BEGIN...COMMIT</code>) con inserción de rol ADMIN.
+                        </div>
+                    </div>
+
+                    <!-- BUG 3 -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-rose-400 text-xs">BUG-S2-003</span>
+                            <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-semibold">Baja</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-white">Desbordamiento Horizontal en Burbujas</h4>
+                        <p class="text-[11px] text-slate-400">Textos extensos sin saltos de línea causaban overflow visual fuera del contenedor.</p>
+                        <div class="text-[11px] pt-2 border-t border-slate-800/80 text-emerald-300">
+                            <span class="font-bold text-slate-200">Solución:</span> Envoltura con <code class="text-cyan-300 font-mono">ConstrainedBox</code> y <code class="text-cyan-300 font-mono">softWrap: true</code> en widgets de Flutter.
+                        </div>
+                    </div>
+
+                    <!-- BUG 4 -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-rose-400 text-xs">BUG-S2-004</span>
+                            <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-semibold">Media</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-white">URLs Malformadas de Google Meet</h4>
+                        <p class="text-[11px] text-slate-400">El formulario permitía ingresar cadenas de texto arbitrarias sin validar el formato de enlace.</p>
+                        <div class="text-[11px] pt-2 border-t border-slate-800/80 text-emerald-300">
+                            <span class="font-bold text-slate-200">Solución:</span> Expresión regular de validación estricta de dominios <code class="text-cyan-300 font-mono">meet.google.com</code>.
+                        </div>
+                    </div>
+
+                    <!-- BUG 5 -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-rose-400 text-xs">BUG-S2-005</span>
+                            <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-semibold">Baja</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-white">Nombres de Subgrupo de 1 Carácter</h4>
+                        <p class="text-[11px] text-slate-400">Se podían crear subgrupos con nombres triviales de 1 o 2 letras sin significado.</p>
+                        <div class="text-[11px] pt-2 border-t border-slate-800/80 text-emerald-300">
+                            <span class="font-bold text-slate-200">Solución:</span> Regla de validación de longitud mínima (mínimo 3 caracteres) en Axum y Dart.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 5: ARQUITECTURA TÉCNICA & RENDIMIENTO                         -->
+        <!-- ================================================================= -->
+        <div id="tab-tech" class="tab-content hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Architecture Card 1: Rust Backend -->
+                <div class="glass-card p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center gap-2 text-cyan-400">
+                        <i data-lucide="server" class="w-5 h-5"></i>
+                        <h3 class="text-sm font-bold text-white">Backend Rust / Axum / Tokio</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Motor asíncrono sin recolector de basura (zero-cost abstractions) diseñado para alta concurrencia en mensajería.
+                    </p>
+                    <div class="space-y-2 pt-2 border-t border-slate-800 font-mono text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Latencia Media:</span>
+                            <span class="text-cyan-400 font-bold">8.2 ms</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Memory Footprint:</span>
+                            <span class="text-slate-200">&lt; 28 MB RAM</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Tasa Errores 500:</span>
+                            <span class="text-emerald-400 font-bold">0.00%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Architecture Card 2: Security & IAM -->
+                <div class="glass-card p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center gap-2 text-emerald-400">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                        <h3 class="text-sm font-bold text-white">Criptografía & Doble Token</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Autenticación basada en JWT de corta vida (15 min) + Refresh Tokens opacos en PostgreSQL con revocación instantánea.
+                    </p>
+                    <div class="space-y-2 pt-2 border-t border-slate-800 font-mono text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Algoritmo Hash:</span>
+                            <span class="text-emerald-400 font-bold">Argon2id (OsRng)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Modelo Permisos:</span>
+                            <span class="text-slate-200">RBAC Fail-Closed</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Vulnerabilidades:</span>
+                            <span class="text-emerald-400 font-bold">0 Reportadas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Architecture Card 3: Flutter Desktop -->
+                <div class="glass-card p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center gap-2 text-indigo-400">
+                        <i data-lucide="monitor" class="w-5 h-5"></i>
+                        <h3 class="text-sm font-bold text-white">Frontend Flutter macOS/Win</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Cliente de escritorio de alto rendimiento con gestión reactiva mediante Riverpod y enrutamiento GoRouter.
+                    </p>
+                    <div class="space-y-2 pt-2 border-t border-slate-800 font-mono text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Widget Test Suite:</span>
+                            <span class="text-indigo-400 font-bold">2.3s (4/4 Pasa)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Memory Leaks:</span>
+                            <span class="text-emerald-400 font-bold">0 Detectados</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Frame Rate:</span>
+                            <span class="text-slate-200">60 fps Constantes</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Database & Migrations Info -->
+            <div class="glass-card p-5 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="database" class="w-4 h-4 text-cyan-400"></i>
+                    Esquema de Base de Datos Relacional (PostgreSQL — Migración 002)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs font-mono">
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-cyan-400 font-bold">tabla: mensajes</div>
+                        <div class="text-[11px] text-slate-400">id, id_nodo, id_usuario, contenido, created_at (TIMESTAMPTZ)</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-cyan-400 font-bold">tabla: subgrupos</div>
+                        <div class="text-[11px] text-slate-400">id, id_nodo, nombre, descripcion, es_privado, creado_por</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-cyan-400 font-bold">tabla: subgrupo_miembros</div>
+                        <div class="text-[11px] text-slate-400">id, id_subgrupo, id_usuario, rol, joined_at</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                        <div class="text-cyan-400 font-bold">tabla: reuniones</div>
+                        <div class="text-[11px] text-slate-400">id, id_nodo, titulo, fecha_reunion, meet_url, duracion_min</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TAB 6: DEFINITION OF DONE & GOBERNANZA                            -->
+        <!-- ================================================================= -->
+        <div id="tab-dod" class="tab-content hidden space-y-6">
+            
+            <div class="glass-card p-6 rounded-2xl space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 uppercase">
+                            Auditoría de Calidad DoD: 100% Cumplido
+                        </span>
+                        <h3 class="text-lg font-bold text-white mt-1">Checklist de Criterios de Aceptación (Definition of Done)</h3>
+                        <p class="text-xs text-slate-400">Todos los criterios fueron verificados por el Scrum Master y el QA Lead.</p>
+                    </div>
+                    <button onclick="triggerCelebration()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 hover:opacity-95 transition">
+                        🎉 Verificar Cierre de Sprint 2
+                    </button>
+                </div>
+
+                <!-- DoD Checklist Categories (6 Criterios Oficiales) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- DoD Item 1 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/30 transition space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-500/30">1</span>
+                                <h4 class="text-xs font-bold text-white leading-snug">100% de los criterios Gherkin verificados y aprobados por QA.</h4>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> CUMPLIDO
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 pl-8">Verificación exhaustiva de escenarios Given-When-Then en las 4 Historias de Usuario.</p>
+                        <div class="text-[10px] text-slate-500 font-mono pl-8 pt-1 flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-3 h-3 text-cyan-400"></i> Responsable: <span class="text-slate-300 font-semibold">QA Lead / Testing</span>
+                        </div>
+                    </div>
+    
+                    <!-- DoD Item 2 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/30 transition space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-500/30">2</span>
+                                <h4 class="text-xs font-bold text-white leading-snug">Casos de prueba ejecutados y respaldados con capturas reales en el informe de QA.</h4>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> CUMPLIDO
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 pl-8">23 Casos de prueba ejecutados y documentados con evidencia visual en el informe de Semana 20.</p>
+                        <div class="text-[10px] text-slate-500 font-mono pl-8 pt-1 flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-3 h-3 text-cyan-400"></i> Responsable: <span class="text-slate-300 font-semibold">QA Dev / Testing</span>
+                        </div>
+                    </div>
+    
+                    <!-- DoD Item 3 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/30 transition space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-500/30">3</span>
+                                <h4 class="text-xs font-bold text-white leading-snug">Código fuente integrado en la rama principal (main) en GitHub.</h4>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> CUMPLIDO
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 pl-8">Integración continua sin conflictos, compilación limpia en Rust Axum y Flutter macOS.</p>
+                        <div class="text-[10px] text-slate-500 font-mono pl-8 pt-1 flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-3 h-3 text-cyan-400"></i> Responsable: <span class="text-slate-300 font-semibold">Scrum Master / Architecture Lead</span>
+                        </div>
+                    </div>
+    
+                    <!-- DoD Item 4 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/30 transition space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-500/30">4</span>
+                                <h4 class="text-xs font-bold text-white leading-snug">0 defectos críticos o bloqueantes abiertos en producción.</h4>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> CUMPLIDO
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 pl-8">5 de 5 bugs cerrados y verificados (BUG-S2-001 al BUG-S2-005) sin incidencias pendientes.</p>
+                        <div class="text-[10px] text-slate-500 font-mono pl-8 pt-1 flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-3 h-3 text-cyan-400"></i> Responsable: <span class="text-slate-300 font-semibold">Equipo InnovaSoft</span>
+                        </div>
+                    </div>
+    
+                    <!-- DoD Item 5 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/30 transition space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-500/30">5</span>
+                                <h4 class="text-xs font-bold text-white leading-snug">Revisión por pares (Code Review) y aprobación del Scrum Master.</h4>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> CUMPLIDO
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 pl-8">Inspección técnica de PRs, tipado estricto, seguridad Argon2id y cumplimiento de patrones.</p>
+                        <div class="text-[10px] text-slate-500 font-mono pl-8 pt-1 flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-3 h-3 text-cyan-400"></i> Responsable: <span class="text-slate-300 font-semibold">Scrum Master & Peer Reviewers</span>
+                        </div>
+                    </div>
+    
+                    <!-- DoD Item 6 -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/30 transition space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-500/30">6</span>
+                                <h4 class="text-xs font-bold text-white leading-snug">Matriz de trazabilidad y Bitácora de Aportes completadas para los 7 integrantes.</h4>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3 h-3"></i> CUMPLIDO
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 pl-8">Consignación individual de aportes, esfuerzo de 64h y trazabilidad completa HU-TC-Bug.</p>
+                        <div class="text-[10px] text-slate-500 font-mono pl-8 pt-1 flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-3 h-3 text-cyan-400"></i> Responsable: <span class="text-slate-300 font-semibold">Equipo InnovaSoft (7 Integrantes)</span>
+                        </div>
+                    </div>
+    
+                </div>
+
+                <!-- Signatures Box -->
+                <div class="p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-blue-950/40 border border-slate-800 text-center space-y-4">
+                    <div class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Aprobación Técnica y Compromiso Académico</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 font-mono text-xs">
+                        <div class="space-y-1">
+                            <div class="text-slate-300 font-bold">Ludwin Saúl Vásquez Romero</div>
+                            <div class="text-slate-500">Scrum Master / Backend & Architecture Lead</div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="text-slate-300 font-bold">Luis Alexander Rivera Álvarez</div>
+                            <div class="text-slate-500">QA Lead / Database & Security Dev</div>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-slate-500">Equipo InnovaSoft — Universidad Gerardo Barrios (UGB) — Ciclo II-2026</div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Interactive Story Modal (Drawer) -->
+    <div id="storyModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#0F172A] border border-cyan-500/30 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closeStoryModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div id="modalContent" class="space-y-4">
+                <!-- Injected via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts for Interactivity & Chart.js -->
+    <script>
+        lucide.createIcons();
+
+        // Switch Tabs Function
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            const target = document.getElementById(tabId);
+            if (target) target.classList.remove('hidden');
+            
+            const btn = document.getElementById('btn-' + tabId);
+            if (btn) btn.classList.add('active');
+
+            // Trigger window resize so Chart.js recalculates dimensions properly
+            window.dispatchEvent(new Event('resize'));
+        }
+
+        // Live Filter for QA Table
+        function filterQATable() {
+            const input = document.getElementById('qaSearchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('qaTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const text = tr[i].textContent || tr[i].innerText;
+                if (text.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+
+        // Confetti Celebration
+        function triggerCelebration() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Story Modal Data
+        const storyDetails = {
+            'IRL-WKS-US-03': {
+                title: 'Chat Persistente en Canales de Nodo',
+                effort: '20 Horas',
+                moscow: 'Must Have (1)',
+                lead: '5.5 días',
+                cycle: '3.0 días',
+                devs: 'Ricardo Mendiola (Lead) / Alberto Velázquez (QA)',
+                desc: 'Permite a los miembros comunicarse mediante mensajería persistente con orden cronológico UTC, badges de rol [ADMIN] / [MEMBER] y scroll reactivo.',
+                criteria: [
+                    'Los mensajes se guardan en PostgreSQL con TIMESTAMPTZ UTC.',
+                    'Auto-scroll reactivo hacia el último mensaje enviado.',
+                    'Diferenciación visual de avatares corporativos y roles.',
+                    'Bloqueo 403 Forbidden para usuarios que no pertenecen al nodo.'
+                ]
+            },
+            'IRL-WKS-US-02': {
+                title: 'Gestión de Subgrupos Públicos y Privados',
+                effort: '16 Horas',
+                moscow: 'Must Have (3)',
+                lead: '5.0 días',
+                cycle: '2.5 días',
+                devs: 'José Fuentes (Lead) / Alberto Velázquez (QA)',
+                desc: 'Organización departamental de temas o proyectos dentro de una misma sala con control de acceso y visibilidad.',
+                criteria: [
+                    'Partición entre subgrupos públicos y privados.',
+                    'El creador queda automáticamente asignado como moderador.',
+                    'Validación de longitud mínima de nombre (3 caracteres).',
+                    'Aislamiento de mensajes y miembros por canal.'
+                ]
+            },
+            'IRL-WKS-US-04': {
+                title: 'Programación de Reuniones Síncronas & Google Meet',
+                effort: '16 Horas',
+                moscow: 'Should Have (3)',
+                lead: '5.5 días',
+                cycle: '3.0 días',
+                devs: 'Víctor Iglesias (Lead) / Luis Rivera (QA)',
+                desc: 'Agendamiento y visualización de eventos de nodo con normalización horaria en UTC y lanzamiento de Google Meet en navegador nativo.',
+                criteria: [
+                    'Almacenamiento en formato ISO 8601 UTC en base de datos.',
+                    'Validación estricta de regex de URLs de Google Meet.',
+                    'Apertura desatendida mediante url_launcher.',
+                    'Cálculo automático de duración en minutos.'
+                ]
+            },
+            'IRL-IAM-US-05': {
+                title: 'Personalización de Perfil & Seguridad Argon2id',
+                effort: '12 Horas',
+                moscow: 'Should Have (5)',
+                lead: '4.8 días',
+                cycle: '2.5 días',
+                devs: 'Ricardo Mendiola (Lead) / Ludwin Vásquez (Arch)',
+                desc: 'Identificación visual en el espacio de trabajo con selector de colores de avatar, chip de presencia y cambio seguro de clave.',
+                criteria: [
+                    'Selector reactivo de 8 colores corporativos con Riverpod.',
+                    'Verificación de contraseña anterior con hash Argon2id.',
+                    'Chip de presencia dinámica (Disponible, Ocupado, Ausente).',
+                    'Almacenamiento seguro de credenciales con flutter_secure_storage.'
+                ]
+            }
+        };
+
+        function openStoryModal(storyId) {
+            const data = storyDetails[storyId];
+            if (!data) return;
+            
+            const html = `
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono font-bold text-xs">${storyId}</span>
+                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-xs">DONE (100%)</span>
+                </div>
+                <h3 class="text-lg font-bold text-white">${data.title}</h3>
+                <p class="text-xs text-slate-300">${data.desc}</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <div><span class="text-slate-500 block">Esfuerzo:</span><span class="text-white font-bold">${data.effort}</span></div>
+                    <div><span class="text-slate-500 block">MoSCoW:</span><span class="text-rose-400 font-bold">${data.moscow}</span></div>
+                    <div><span class="text-slate-500 block">Lead Time:</span><span class="text-cyan-400 font-bold">${data.lead}</span></div>
+                    <div><span class="text-slate-500 block">Cycle Time:</span><span class="text-amber-400 font-bold">${data.cycle}</span></div>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                    <span class="font-bold text-slate-200">Criterios de Aceptación Validados:</span>
+                    <ul class="list-disc pl-5 text-slate-300 space-y-1">
+                        ${data.criteria.map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="pt-2 text-[11px] text-slate-400 border-t border-slate-800">
+                    <span class="font-bold text-slate-300">Responsables Técnicos:</span> ${data.devs}
+                </div>
+            `;
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('storyModal').classList.remove('hidden');
+        }
+
+        function closeStoryModal() {
+            document.getElementById('storyModal').classList.add('hidden');
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeStoryModal();
+        });
+
+        // ----------------------------------------------------
+        // Chart.js Implementations
+        // ----------------------------------------------------
+        
+        // 1. Burndown Chart
+        const ctxBurndown = document.getElementById('mainBurndownChart').getContext('2d');
+        new Chart(ctxBurndown, {
+            type: 'line',
+            data: {
+                labels: ['Inicio (Día 0)', 'Semana 1', 'Semana 2', 'Semana 3', 'Semana 4 (Cierre)'],
+                datasets: [
+                    {
+                        label: 'Línea Ideal (Horas)',
+                        data: [64, 48, 32, 16, 0],
+                        borderColor: '#64748B',
+                        borderDash: [6, 6],
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#64748B',
+                        fill: false,
+                        tension: 0
+                    },
+                    {
+                        label: 'Esfuerzo Real Restante',
+                        data: [64, 50, 27, 9, 0],
+                        borderColor: '#06B6D4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                        borderWidth: 3,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#06B6D4',
+                        fill: true,
+                        tension: 0.2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0F172A',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        padding: 10,
+                        titleFont: { family: 'Plus Jakarta Sans', weight: 'bold' },
+                        bodyFont: { family: 'JetBrains Mono' },
+                        callbacks: {
+                            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + ' h'; }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#94A3B8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono', size: 11 } },
+                        title: { display: true, text: 'Horas de Trabajo Restantes', color: '#64748B', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // 2. Effort Doughnut
+        const ctxEffort = document.getElementById('mainEffortChart').getContext('2d');
+        new Chart(ctxEffort, {
+            type: 'doughnut',
+            data: {
+                labels: ['Chat Persistente', 'Subgrupos', 'Reuniones', 'Perfil & Presencia'],
+                datasets: [{
+                    data: [20, 16, 16, 12],
+                    backgroundColor: ['#0284C7', '#06B6D4', '#6366F1', '#10B981'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0F172A',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed + ' h (' + Math.round(ctx.parsed/64*100) + '%)'; }
+                        }
+                    }
+                },
+                cutout: '72%'
+            }
+        });
+
+        // 3. Tab Kanban Chart
+        const ctxTabKanban = document.getElementById('tabKanbanChart').getContext('2d');
+        new Chart(ctxTabKanban, {
+            type: 'bar',
+            data: {
+                labels: ['Chat (US-03)', 'Subgrupos (US-02)', 'Reuniones (US-04)', 'Perfil (US-05)'],
+                datasets: [
+                    {
+                        label: 'Lead Time (Días)',
+                        data: [5.5, 5.0, 5.5, 4.8],
+                        backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Cycle Time (Días)',
+                        data: [3.0, 2.5, 3.0, 2.5],
+                        backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94A3B8', font: { family: 'Plus Jakarta Sans', size: 11 } } }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 11 } } },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono' } },
+                        title: { display: true, text: 'Días', color: '#64748B' }
+                    }
+                }
+            }
+        });
+
+        // 4. Tab QA Chart
+        const ctxTabQA = document.getElementById('tabQAChart').getContext('2d');
+        new Chart(ctxTabQA, {
+            type: 'bar',
+            data: {
+                labels: ['Chat', 'Subgrupos', 'Reuniones', 'Perfil', 'UX Desktop', 'Backend REST'],
+                datasets: [
+                    {
+                        label: 'Casos Aprobados (Pasa)',
+                        data: [5, 4, 5, 4, 2, 3],
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Bugs Resueltos',
+                        data: [1, 2, 1, 1, 0, 0],
+                        backgroundColor: 'rgba(244, 63, 94, 0.85)',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94A3B8', font: { family: 'Plus Jakarta Sans', size: 11 } } }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#94A3B8' } },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#94A3B8', font: { family: 'JetBrains Mono' } },
+                        title: { display: true, text: 'Cantidad de Pruebas', color: '#64748B' }
+                    }
+                }
+            }
+        });
+    
+        // =================================================================
+        // TEAM MEMBERS ANIMATED SLIDER LOGIC (7 Integrantes InnovaSoft)
+        // =================================================================
+        const teamMembers = [
+            {
+                name: "Ludwin Saúl Vásquez Romero",
+                role: "Scrum Master / Backend & Architecture Lead",
+                initials: "LV",
+                color: "from-cyan-500 to-blue-600",
+                roleColor: "text-cyan-300"
+            },
+            {
+                name: "Luis Alexander Rivera Álvarez",
+                role: "QA Lead / Database & Security Dev",
+                initials: "LR",
+                color: "from-emerald-500 to-teal-600",
+                roleColor: "text-emerald-300"
+            },
+            {
+                name: "Alberto José Velázquez Paz",
+                role: "Frontend Lead / Desktop UI & QA Tester",
+                initials: "AV",
+                color: "from-indigo-500 to-purple-600",
+                roleColor: "text-indigo-300"
+            },
+            {
+                name: "Luis Ángel Zúñiga Menjívar",
+                role: "Backend Dev / API Security & Conformance",
+                initials: "LZ",
+                color: "from-sky-500 to-blue-700",
+                roleColor: "text-sky-300"
+            },
+            {
+                name: "Ricardo Alberto Mendiola Hernández",
+                role: "Dev / Chat Persistente & Perfil Lead",
+                initials: "RM",
+                color: "from-purple-500 to-pink-600",
+                roleColor: "text-purple-300"
+            },
+            {
+                name: "Víctor Arnoldo Iglesias Sandoval",
+                role: "Dev / Reuniones & Servicios Síncronos",
+                initials: "VI",
+                color: "from-amber-500 to-orange-600",
+                roleColor: "text-amber-300"
+            },
+            {
+                name: "José Luis Fuentes Ochoa",
+                role: "Dev / Subgrupos & Organización de Nodos",
+                initials: "JF",
+                color: "from-teal-500 to-emerald-700",
+                roleColor: "text-teal-300"
+            }
+        ];
+
+        let currentMemberIndex = 0;
+        let sliderTimer = null;
+        let isHovered = false;
+
+        function renderMember(index, animate = true) {
+            const member = teamMembers[index];
+            const textWrapper = document.getElementById('sliderTextWrapper');
+            const avatar = document.getElementById('sliderAvatar');
+            const nameEl = document.getElementById('sliderName');
+            const roleEl = document.getElementById('sliderRole');
+            const badgeEl = document.getElementById('sliderBadge');
+            const pBar = document.getElementById('sliderProgressBar');
+
+            if (!textWrapper) return;
+
+            if (animate) {
+                textWrapper.style.transform = 'translateY(-10px)';
+                textWrapper.style.opacity = '0';
+                avatar.style.transform = 'scale(0.85)';
+                avatar.style.opacity = '0.5';
+
+                setTimeout(() => {
+                    avatar.className = `w-8 h-8 rounded-lg bg-gradient-to-br ${member.color} text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 ring-1 ring-white/10 shadow transition-all duration-500`;
+                    avatar.innerText = member.initials;
+                    nameEl.innerText = member.name;
+                    roleEl.innerText = member.role;
+                    roleEl.className = `text-[10px] ${member.roleColor} font-medium truncate`;
+                    badgeEl.innerText = `${index + 1}/7`;
+
+                    textWrapper.style.transform = 'translateY(0)';
+                    textWrapper.style.opacity = '1';
+                    avatar.style.transform = 'scale(1)';
+                    avatar.style.opacity = '1';
+                }, 250);
+            } else {
+                avatar.className = `w-8 h-8 rounded-lg bg-gradient-to-br ${member.color} text-white font-mono font-bold text-xs flex items-center justify-center shrink-0 ring-1 ring-white/10 shadow transition-all duration-500`;
+                avatar.innerText = member.initials;
+                nameEl.innerText = member.name;
+                roleEl.innerText = member.role;
+                roleEl.className = `text-[10px] ${member.roleColor} font-medium truncate`;
+                badgeEl.innerText = `${index + 1}/7`;
+            }
+
+            // Reset and trigger progress bar
+            if (pBar) {
+                pBar.style.transition = 'none';
+                pBar.style.width = '0%';
+                setTimeout(() => {
+                    pBar.style.transition = 'width 3500ms linear';
+                    pBar.style.width = '100%';
+                }, 50);
+            }
+        }
+
+        function nextMember() {
+            currentMemberIndex = (currentMemberIndex + 1) % teamMembers.length;
+            renderMember(currentMemberIndex);
+            resetSliderTimer();
+        }
+
+        function prevMember() {
+            currentMemberIndex = (currentMemberIndex - 1 + teamMembers.length) % teamMembers.length;
+            renderMember(currentMemberIndex);
+            resetSliderTimer();
+        }
+
+        function startSliderTimer() {
+            sliderTimer = setInterval(() => {
+                if (!isHovered) {
+                    currentMemberIndex = (currentMemberIndex + 1) % teamMembers.length;
+                    renderMember(currentMemberIndex);
+                }
+            }, 3600);
+        }
+
+        function resetSliderTimer() {
+            clearInterval(sliderTimer);
+            startSliderTimer();
+        }
+
+        // Initialize Slider
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMember(0, false);
+            startSliderTimer();
+
+            const container = document.getElementById('teamSliderContainer');
+            if (container) {
+                container.addEventListener('mouseenter', () => { isHovered = true; });
+                container.addEventListener('mouseleave', () => { isHovered = false; });
+            }
+        });
+
+    </script>
+</body>
+</html>
